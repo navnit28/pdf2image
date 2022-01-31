@@ -3,13 +3,40 @@ var router = express.Router();
 const {
   fromPath
 } = require("pdf2pic");
-const pdf = require("pdf-page-counter");
 const pdf2base64 = require('pdf-to-base64');
 const fs = require('fs');
 const PDFDocument = require('pdf-lib').PDFDocument;
-const convertImage=require('./temp/helper/a.js');
 var app = express();
 var PDFImage = require("pdf-image").PDFImage;
+// import {default as pdfConverter} from 'pdf-poppler'
+const path = require('path');
+const pdf = require('pdf-poppler');
+
+function convertImage(pdfPath) {
+    console.log("converting image");
+    let file = './file.pdf'
+    pdf.info(file)
+    .then(pdfinfo => {
+        console.log(pdfinfo);
+        console.log(path.dirname(file));
+        console.log(path.basename(file,path.extname(file)));
+    });
+ 
+    let opts = {
+        format: 'jpeg',
+        out_dir: path.dirname(file),
+        out_prefix: path.basename(file,path.extname(file)),
+        page: 1
+    }
+ 
+    pdf.convert(file, opts)
+        .then(res => {
+            console.log('Successfully converted')
+        })
+        .catch(error => {
+            console.error(error)
+        })
+}
 async function splitPdf(pathToPdf) {
 
     const docmentAsBytes = await fs.promises.readFile(pathToPdf);
@@ -39,15 +66,14 @@ const Base64toFile = async(dataurl, filename,fileType) => {
 };
 app.get("/pdfpng", async function(req, res) {
     //spliting the pdf
-    // try{
-    // await splitPdf("./public/uploads/sample.pdf");
-    // //res.status(200).send("success");
-    // console.log("pdf splitted successfully");
-    // }
-    // catch (err)
-    // {
-    //     res.status(500).send(err);
-    // }
+    try{
+        await splitPdf("./public/uploads/sample.pdf");
+        console.log("pdf splitted successfully");
+        }
+    catch (err)
+    {
+        res.status(500).send(err);
+    }
     try{
         convertImage("./file.pdf");
         res.send("success");
